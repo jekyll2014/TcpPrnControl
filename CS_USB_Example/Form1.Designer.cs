@@ -459,7 +459,7 @@ namespace TcpPrnControl
             // textBox_ipAddress
             // 
             this.textBox_ipAddress.Location = new System.Drawing.Point(139, 6);
-            this.textBox_ipAddress.MaxLength = 15;
+            this.textBox_ipAddress.MaxLength = 256;
             this.textBox_ipAddress.Name = "textBox_ipAddress";
             this.textBox_ipAddress.Size = new System.Drawing.Size(78, 20);
             this.textBox_ipAddress.TabIndex = 118;
@@ -506,7 +506,7 @@ namespace TcpPrnControl
             this.Name = "Form1";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "UsbPrnControl (c) Andrey Kalugin (jekyll@mail.ru), 2016";
+            this.Text = "TcpPrnControl (c) Andrey Kalugin (jekyll@mail.ru), 2017";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);

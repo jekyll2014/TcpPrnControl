@@ -17,7 +17,7 @@ namespace TcpPrnControl
         long oldTicks = DateTime.Now.Ticks, limitTick = 0;
         public const byte Port1DataIn = 11;
         public const byte Port1DataOut = 12;
-        public const byte Port1Error = 15;
+        public const byte Port1Error = 13;
 
         private object threadLock = new object();
         public void collectBuffer(string tmpBuffer, int state, string time)
@@ -56,8 +56,11 @@ namespace TcpPrnControl
                             MessageBox.Show("\r\nError opening file " + textBox_saveTo.Text + ": " + ex.Message);
                         }
                     }
-                    textBox_terminal.SelectionStart = textBox_terminal.TextLength;
-                    textBox_terminal.SelectedText = tmpBuffer;
+                    if (checkBox_autoscroll.Checked)
+                    {
+                        textBox_terminal.SelectionStart = textBox_terminal.TextLength;
+                        textBox_terminal.SelectedText = tmpBuffer;
+                    }
                     oldTicks = DateTime.Now.Ticks;
                 }
             }
@@ -82,7 +85,7 @@ namespace TcpPrnControl
                     clientSocket.Client.ReceiveTimeout = 500;
                     clientSocket.Client.SendTimeout = 500;
                     serverStream = clientSocket.GetStream();
-                    collectBuffer("Server connected to: " + textBox_ipAddress.Text + ":" + textBox_port.Text, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    collectBuffer("Port opened: " + textBox_ipAddress.Text + ":" + textBox_port.Text, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                     button_Open.Enabled = false;
                     textBox_ipAddress.Enabled = false;
                     textBox_port.Enabled = false;
@@ -91,9 +94,9 @@ namespace TcpPrnControl
                     button_sendFile.Enabled = true;
                     textBox_fileName_TextChanged(this, EventArgs.Empty);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    collectBuffer("Port open failure", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    collectBuffer("Port open failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
             }
             else collectBuffer("Port already connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
@@ -109,7 +112,7 @@ namespace TcpPrnControl
                     serverStream.Close();
                     clientSocket.Close();
                     clientSocket = new TcpClient();
-                    collectBuffer("Server disconnected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    collectBuffer("Port closed", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                     button_Open.Enabled = true;
                     button_closeport.Enabled = false;
                     button_Send.Enabled = false;
@@ -117,9 +120,9 @@ namespace TcpPrnControl
                     textBox_ipAddress.Enabled = true;
                     textBox_port.Enabled = true;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    collectBuffer("Port close failure", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    collectBuffer("Port close failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
             }
             else collectBuffer("Port already disconnected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
@@ -129,40 +132,26 @@ namespace TcpPrnControl
         {
             if (clientSocket.Client.Connected && textBox_command.Text + textBox_param.Text != "")
             {
-                string outStr;
-                if (checkBox_hexCommand.Checked) outStr = textBox_command.Text;
-                else outStr = Accessory.ConvertStringToHex(textBox_command.Text);
-                if (checkBox_hexParam.Checked) outStr += textBox_param.Text;
-                else outStr += Accessory.ConvertStringToHex(textBox_param.Text);
-                if (outStr != "")
+                if (textBox_command.Text + textBox_param.Text != "")
                 {
-                    if (checkBox_hexTerminal.Checked) collectBuffer(outStr, Port1DataOut, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                    else collectBuffer(Accessory.ConvertHexToString(outStr), Port1DataOut, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                    textBox_command.AutoCompleteCustomSource.Add(textBox_command.Text);
-                    textBox_param.AutoCompleteCustomSource.Add(textBox_param.Text);
-                    try
+                    string outStr;
+                    if (checkBox_hexCommand.Checked) outStr = textBox_command.Text;
+                    else outStr = Accessory.ConvertStringToHex(textBox_command.Text);
+                    if (checkBox_hexParam.Checked) outStr += textBox_param.Text;
+                    else outStr += Accessory.ConvertStringToHex(textBox_param.Text);
+                    if (outStr != "")
                     {
+                        if (checkBox_hexTerminal.Checked) collectBuffer(outStr, Port1DataOut, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                        else collectBuffer(Accessory.ConvertHexToString(outStr), Port1DataOut, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                        textBox_command.AutoCompleteCustomSource.Add(textBox_command.Text);
+                        textBox_param.AutoCompleteCustomSource.Add(textBox_param.Text);
                         byte[] outStream = Accessory.ConvertHexToByteArray(outStr);
-                        serverStream.Write(outStream, 0, outStream.Length);
+                        WriteTCP(outStream);
                     }
-                    catch
-                    {
-                        collectBuffer("Write failure", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                    }
-                    ReadTCP();
                 }
-            }
-            else collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-        }
-
-        private void ReadTCP()
-        {
-            if (clientSocket.Client.Connected && serverStream.DataAvailable)
-            {
-                try
+                byte[] inStream = ReadTCP();
+                if (inStream.Length > 0)
                 {
-                    byte[] inStream = new byte[clientSocket.Available];
-                    serverStream.Read(inStream, 0, inStream.Length);
                     if (checkBox_saveInput.Checked)
                     {
                         if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
@@ -171,28 +160,51 @@ namespace TcpPrnControl
                     if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                     else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
-                catch
+            }
+            else collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+        }
+
+        private byte[] ReadTCP()
+        {
+            if (clientSocket.Client.Connected && serverStream.DataAvailable)
+            {
+                try
                 {
-                    collectBuffer("Read failure", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    byte[] inStream = new byte[clientSocket.Available];
+                    serverStream.Read(inStream, 0, inStream.Length);
+                    return inStream;
+                }
+                catch (Exception ex)
+                {
+                    collectBuffer("Read failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
             }
+            else collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+            return new byte[0];
         }
 
         private bool WriteTCP(byte[] outStream)
         {
-            if (clientSocket.Client.Connected && outStream.Length > 0)
+            if (clientSocket.Client.Connected)
             {
-                try
+                if (outStream.Length > 0)
                 {
-                    serverStream.Write(outStream, 0, outStream.Length);
-                }
-                catch
-                {
-                    collectBuffer("Write failure", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                    return false;
+                    try
+                    {
+                        serverStream.Write(outStream, 0, outStream.Length);
+                    }
+                    catch (Exception ex)
+                    {
+                        collectBuffer("Write failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                        return false;
+                    }
                 }
             }
-            else return false;
+            else
+            {
+                collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                return false;
+            }
             return true;
         }
 
@@ -225,7 +237,17 @@ namespace TcpPrnControl
 
         private void textBox_terminal_Click(object sender, EventArgs e)
         {
-            ReadTCP();
+            byte[] inStream = ReadTCP();
+            if (inStream.Length > 0)
+            {
+                if (checkBox_saveInput.Checked)
+                {
+                    if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                    else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                }
+                if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+            }
         }
 
         private void checkBox_saveTo_CheckedChanged(object sender, EventArgs e)
@@ -290,7 +312,17 @@ namespace TcpPrnControl
                                     {
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
                                         await TaskEx.Delay(strDelay);
-                                        ReadTCP();
+                                        byte[] inStream = ReadTCP();
+                                        if (inStream.Length > 0)
+                                        {
+                                            if (checkBox_saveInput.Checked)
+                                            {
+                                                if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                                else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                            }
+                                            if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                            else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                        }
                                     }
                                     else
                                     {
@@ -315,7 +347,20 @@ namespace TcpPrnControl
                                 {
                                     MessageBox.Show("\r\nError reading file " + textBox_fileName.Text + ": " + ex.Message);
                                 }
-                                if (WriteTCP(tmpBuffer)) ReadTCP();
+                                if (WriteTCP(tmpBuffer))
+                                {
+                                    byte[] inStream = ReadTCP();
+                                    if (inStream.Length > 0)
+                                    {
+                                        if (checkBox_saveInput.Checked)
+                                        {
+                                            if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                            else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                        }
+                                        if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                        else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                    }
+                                }
                                 else outErr = "Write Failure";
                                 if (checkBox_hexTerminal.Checked) outStr = Accessory.ConvertByteArrayToHex(tmpBuffer, tmpBuffer.Length);
                                 //else outStr += ConvertHexToString(ConvertByteArrToHex(tmpBuffer, tmpBuffer.Length));
@@ -347,7 +392,17 @@ namespace TcpPrnControl
                                         if (checkBox_hexTerminal.Checked) outStr = tmpBuffer[m];
                                         else outStr = Accessory.ConvertHexToString(tmpBuffer[m]);
                                         await TaskEx.Delay(strDelay);
-                                        ReadTCP();
+                                        byte[] inStream = ReadTCP();
+                                        if (inStream.Length > 0)
+                                        {
+                                            if (checkBox_saveInput.Checked)
+                                            {
+                                                if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                                else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                            }
+                                            if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                            else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                        }
                                     }
                                     else  //??????????????
                                     {
@@ -380,7 +435,17 @@ namespace TcpPrnControl
                                         if (checkBox_hexTerminal.Checked) outStr = tmpBuffer.Substring(m, 3);
                                         else outStr = Accessory.ConvertHexToString(tmpBuffer.Substring(m, 3));
                                         await TaskEx.Delay(strDelay);
-                                        ReadTCP();
+                                        byte[] inStream = ReadTCP();
+                                        if (inStream.Length > 0)
+                                        {
+                                            if (checkBox_saveInput.Checked)
+                                            {
+                                                if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                                else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                            }
+                                            if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                            else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                        }
                                     }
                                     else
                                     {
@@ -405,7 +470,20 @@ namespace TcpPrnControl
                                 {
                                     MessageBox.Show("\r\nError reading file " + textBox_fileName.Text + ": " + ex.Message);
                                 }
-                                if (WriteTCP(Accessory.ConvertHexToByteArray(tmpBuffer))) ReadTCP();
+                                if (WriteTCP(Accessory.ConvertHexToByteArray(tmpBuffer)))
+                                {
+                                    byte[] inStream = ReadTCP();
+                                    if (inStream.Length > 0)
+                                    {
+                                        if (checkBox_saveInput.Checked)
+                                        {
+                                            if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                            else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                                        }
+                                        if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                        else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                                    }
+                                }
                                 else collectBuffer("Write Failure\r\n", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                                 if (checkBox_hexTerminal.Checked) outStr = tmpBuffer;
                                 else outStr = Accessory.ConvertHexToString(tmpBuffer);
