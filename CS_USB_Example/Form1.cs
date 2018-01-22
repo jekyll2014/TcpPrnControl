@@ -193,24 +193,6 @@ namespace TcpPrnControl
             textBox_terminal.Clear();
         }
 
-        private void textBox_terminal_Click(object sender, EventArgs e)
-        {
-            if (button_Open.Enabled == false)
-            {
-                byte[] inStream = ReadTCP();
-                if (inStream.Length > 0)
-                {
-                    if (checkBox_saveInput.Checked)
-                    {
-                        if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                        else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                    }
-                    if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                    else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                }
-            }
-        }
-
         private void checkBox_saveTo_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox_saveInput.Checked || checkBox_saveOutput.Checked) textBox_saveTo.Enabled = false;
@@ -225,6 +207,7 @@ namespace TcpPrnControl
             }
             else if (SendComing == 0)
             {
+                timer1.Enabled = false;
                 UInt16 repeat = 1, delay = 1, strDelay = 1;
 
                 if (textBox_fileName.Text != "" && textBox_sendNum.Text != "" && UInt16.TryParse(textBox_sendNum.Text, out repeat) && UInt16.TryParse(textBox_delay.Text, out delay) && UInt16.TryParse(textBox_strDelay.Text, out strDelay))
@@ -466,6 +449,7 @@ namespace TcpPrnControl
                     textBox_strDelay.Enabled = true;
                 }
                 SendComing = 0;
+                timer1.Enabled = true;
             }
         }
 
@@ -532,6 +516,7 @@ namespace TcpPrnControl
             textBox_param.Text = Properties.Settings.Default.textBox_param;
             textBox_ipAddress.Text = Properties.Settings.Default.DefaultAddress;
             textBox_port.Text = Properties.Settings.Default.DefaultPort;
+            timer1.Interval = Properties.Settings.Default.TCPDataRefreshInterval;
         }
 
         private void radioButton_stream_CheckedChanged(object sender, EventArgs e)
@@ -624,13 +609,31 @@ namespace TcpPrnControl
         {
             if (isClientConnected())
             {
-                textBox_terminal_Click(this, EventArgs.Empty);
+                if (isClientConnected())
+                {
+                    byte[] inStream = ReadTCP();
+                    if (inStream.Length > 0)
+                    {
+                        if (checkBox_saveInput.Checked)
+                        {
+                            if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                            else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                        }
+                        if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                        else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    }
+                }
+                else
+                {
+                    timer1.Enabled = false;
+                    button_CLOSE_Click(this, EventArgs.Empty);
+                }
             }
             else
             {
                 timer1.Enabled = false;
                 button_CLOSE_Click(this, EventArgs.Empty);
-            }            
+            }
         }
     }
 }

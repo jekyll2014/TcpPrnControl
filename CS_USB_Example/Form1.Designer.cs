@@ -145,7 +145,6 @@ namespace TcpPrnControl
             this.textBox_terminal.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBox_terminal.Size = new System.Drawing.Size(552, 27);
             this.textBox_terminal.TabIndex = 17;
-            this.textBox_terminal.Click += new System.EventHandler(this.textBox_terminal_Click);
             // 
             // checkBox_hexCommand
             // 
@@ -465,6 +464,10 @@ namespace TcpPrnControl
             this.textBox_ipAddress.Name = "textBox_ipAddress";
             this.textBox_ipAddress.Size = new System.Drawing.Size(78, 20);
             this.textBox_ipAddress.TabIndex = 118;
+            // 
+            // timer1
+            // 
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // Form1
             // 
