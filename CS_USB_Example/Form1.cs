@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -92,6 +93,7 @@ namespace TcpPrnControl
                     button_closeport.Enabled = true;
                     button_Send.Enabled = true;
                     button_sendFile.Enabled = true;
+                    timer1.Enabled = true;
                     textBox_fileName_TextChanged(this, EventArgs.Empty);
                 }
                 catch (Exception ex)
@@ -104,6 +106,7 @@ namespace TcpPrnControl
 
         private void button_CLOSE_Click(object sender, EventArgs e)
         {
+            timer1.Enabled = false;
             if (clientSocket.Connected)
             {
                 try
@@ -130,7 +133,7 @@ namespace TcpPrnControl
 
         private void button_WRITE_Click(object sender, EventArgs e)
         {
-            if (clientSocket.Client.Connected && textBox_command.Text + textBox_param.Text != "")
+            if (textBox_command.Text + textBox_param.Text != "")
             {
                 if (textBox_command.Text + textBox_param.Text != "")
                 {
@@ -161,51 +164,6 @@ namespace TcpPrnControl
                     else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
             }
-            else collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-        }
-
-        private byte[] ReadTCP()
-        {
-            if (clientSocket.Client.Connected && serverStream.DataAvailable)
-            {
-                try
-                {
-                    byte[] inStream = new byte[clientSocket.Available];
-                    serverStream.Read(inStream, 0, inStream.Length);
-                    return inStream;
-                }
-                catch (Exception ex)
-                {
-                    collectBuffer("Read failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                }
-            }
-            else collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-            return new byte[0];
-        }
-
-        private bool WriteTCP(byte[] outStream)
-        {
-            if (clientSocket.Client.Connected)
-            {
-                if (outStream.Length > 0)
-                {
-                    try
-                    {
-                        serverStream.Write(outStream, 0, outStream.Length);
-                    }
-                    catch (Exception ex)
-                    {
-                        collectBuffer("Write failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                        return false;
-                    }
-                }
-            }
-            else
-            {
-                collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                return false;
-            }
-            return true;
         }
 
         private void checkBox_hexCommand_CheckedChanged(object sender, EventArgs e)
@@ -237,16 +195,19 @@ namespace TcpPrnControl
 
         private void textBox_terminal_Click(object sender, EventArgs e)
         {
-            byte[] inStream = ReadTCP();
-            if (inStream.Length > 0)
+            if (button_Open.Enabled == false)
             {
-                if (checkBox_saveInput.Checked)
+                byte[] inStream = ReadTCP();
+                if (inStream.Length > 0)
                 {
-                    if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                    else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                    if (checkBox_saveInput.Checked)
+                    {
+                        if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                        else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                    }
+                    if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
-                if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
-                else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
             }
         }
 
@@ -550,6 +511,7 @@ namespace TcpPrnControl
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            timer1.Enabled = false;
             if (clientSocket.Client.Connected)
             {
                 clientSocket.Client.Disconnect(false);
@@ -581,6 +543,94 @@ namespace TcpPrnControl
         {
             if (textBox_fileName.Text != "" && button_closeport.Enabled == true) button_sendFile.Enabled = true;
             else button_sendFile.Enabled = false;
+        }
+
+        private byte[] ReadTCP()
+        {
+            if (isClientConnected())
+            {
+                if (serverStream.DataAvailable)
+                {
+                    try
+                    {
+                        byte[] inStream = new byte[clientSocket.Available];
+                        serverStream.Read(inStream, 0, inStream.Length);
+                        return inStream;
+                    }
+                    catch (Exception ex)
+                    {
+                        collectBuffer("Read failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                    }
+                }
+                return new byte[0];
+            }
+            else
+            {
+                collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                button_CLOSE_Click(this, EventArgs.Empty);
+                return new byte[0];
+            }
+        }
+
+        private bool WriteTCP(byte[] outStream)
+        {
+            if (isClientConnected())
+            {
+                if (outStream.Length > 0)
+                {
+                    try
+                    {
+                        serverStream.Write(outStream, 0, outStream.Length);
+                    }
+                    catch (Exception ex)
+                    {
+                        collectBuffer("Write failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                collectBuffer("Port not connected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
+                button_CLOSE_Click(this, EventArgs.Empty);
+                return false;
+            }
+            return true;
+        }
+
+        public bool isClientConnected()
+        {
+            IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+            TcpConnectionInformation[] tcpConnections = ipProperties.GetActiveTcpConnections();
+            foreach (TcpConnectionInformation c in tcpConnections)
+            {
+                TcpState stateOfConnection = c.State;
+                if (c.LocalEndPoint.Equals(clientSocket.Client.LocalEndPoint) && c.RemoteEndPoint.Equals(clientSocket.Client.RemoteEndPoint))
+                {
+                    if (stateOfConnection == TcpState.Established)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (isClientConnected())
+            {
+                textBox_terminal_Click(this, EventArgs.Empty);
+            }
+            else
+            {
+                timer1.Enabled = false;
+                button_CLOSE_Click(this, EventArgs.Empty);
+            }            
         }
     }
 }

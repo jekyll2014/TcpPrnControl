@@ -39,6 +39,7 @@ namespace TcpPrnControl
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.label_UsbPrnList = new System.Windows.Forms.Label();
             this.button_Open = new System.Windows.Forms.Button();
             this.button_closeport = new System.Windows.Forms.Button();
@@ -73,6 +74,7 @@ namespace TcpPrnControl
             this.label2 = new System.Windows.Forms.Label();
             this.textBox_port = new System.Windows.Forms.TextBox();
             this.textBox_ipAddress = new System.Windows.Forms.TextBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // label_UsbPrnList
@@ -550,6 +552,7 @@ namespace TcpPrnControl
         ToolTip ToolTipTerminal = new ToolTip();
         private TextBox textBox_port;
         private TextBox textBox_ipAddress;
+        private Timer timer1;
     }
 }
 
