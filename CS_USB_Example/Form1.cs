@@ -107,8 +107,6 @@ namespace TcpPrnControl
         private void button_CLOSE_Click(object sender, EventArgs e)
         {
             timer1.Enabled = false;
-            if (clientSocket.Connected)
-            {
                 try
                 {
                     clientSocket.Client.Disconnect(false);
@@ -127,8 +125,6 @@ namespace TcpPrnControl
                 {
                     collectBuffer("Port close failure: " + ex.Message, Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
                 }
-            }
-            else collectBuffer("Port already disconnected", Port1Error, DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." + DateTime.Now.Millisecond.ToString("D3"));
         }
 
         private void button_WRITE_Click(object sender, EventArgs e)
