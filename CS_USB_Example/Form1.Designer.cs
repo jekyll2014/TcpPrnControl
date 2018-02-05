@@ -244,7 +244,7 @@ namespace TcpPrnControl
             this.textBox_saveTo.Name = "textBox_saveTo";
             this.textBox_saveTo.Size = new System.Drawing.Size(62, 20);
             this.textBox_saveTo.TabIndex = 14;
-            this.textBox_saveTo.Text = "usb_rx.txt";
+            this.textBox_saveTo.Text = "tcp_rx.txt";
             // 
             // button_openFile
             // 

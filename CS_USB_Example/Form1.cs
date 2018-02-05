@@ -124,24 +124,24 @@ namespace TcpPrnControl
         private void button_CLOSE_Click(object sender, EventArgs e)
         {
             timer1.Enabled = false;
-                try
-                {
-                    clientSocket.Client.Disconnect(false);
-                    serverStream.Close();
-                    clientSocket.Close();
-                    clientSocket = new TcpClient();
-                    collectBuffer("Port closed", Port1Error);
-                    button_Open.Enabled = true;
-                    button_closeport.Enabled = false;
-                    button_Send.Enabled = false;
-                    button_sendFile.Enabled = false;
-                    textBox_ipAddress.Enabled = true;
-                    textBox_port.Enabled = true;
-                }
-                catch (Exception ex)
-                {
-                    collectBuffer("Port close failure: " + ex.Message, Port1Error);
-                }
+            try
+            {
+                clientSocket.Client.Disconnect(false);
+                serverStream.Close();
+                clientSocket.Close();
+                clientSocket = new TcpClient();
+                collectBuffer("Port closed", Port1Error);
+                button_Open.Enabled = true;
+                button_closeport.Enabled = false;
+                button_Send.Enabled = false;
+                button_sendFile.Enabled = false;
+                textBox_ipAddress.Enabled = true;
+                textBox_port.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                collectBuffer("Port close failure: " + ex.Message, Port1Error);
+            }
         }
 
         private void button_WRITE_Click(object sender, EventArgs e)
@@ -165,17 +165,7 @@ namespace TcpPrnControl
                         WriteTCP(outStream);
                     }
                 }
-                byte[] inStream = ReadTCP();
-                if (inStream.Length > 0)
-                {
-                    if (checkBox_saveInput.Checked)
-                    {
-                        if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                        else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                    }
-                    if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn);
-                    else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn);
-                }
+                timer1_Tick(this, EventArgs.Empty);
             }
         }
 
@@ -622,20 +612,20 @@ namespace TcpPrnControl
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-                if (isClientConnected())
+            if (isClientConnected())
+            {
+                byte[] inStream = ReadTCP();
+                if (inStream.Length > 0)
                 {
-                    byte[] inStream = ReadTCP();
-                    if (inStream.Length > 0)
-                    {
-                        if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn);
-                        else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn);
-                    }
+                    if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn);
+                    else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn);
                 }
-                else
-                {
-                    timer1.Enabled = false;
-                    button_CLOSE_Click(this, EventArgs.Empty);
-                }
+            }
+            else
+            {
+                timer1.Enabled = false;
+                button_CLOSE_Click(this, EventArgs.Empty);
+            }
         }
     }
 }
