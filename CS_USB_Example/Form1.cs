@@ -622,18 +622,11 @@ namespace TcpPrnControl
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (isClientConnected())
-            {
                 if (isClientConnected())
                 {
                     byte[] inStream = ReadTCP();
                     if (inStream.Length > 0)
                     {
-                        if (checkBox_saveInput.Checked)
-                        {
-                            if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                            else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                        }
                         if (checkBox_hexTerminal.Checked) collectBuffer(Accessory.ConvertByteArrayToHex(inStream, inStream.Length), Port1DataIn);
                         else collectBuffer(Encoding.GetEncoding(Properties.Settings.Default.CodePage).GetString(inStream), Port1DataIn);
                     }
@@ -643,12 +636,6 @@ namespace TcpPrnControl
                     timer1.Enabled = false;
                     button_CLOSE_Click(this, EventArgs.Empty);
                 }
-            }
-            else
-            {
-                timer1.Enabled = false;
-                button_CLOSE_Click(this, EventArgs.Empty);
-            }
         }
     }
 }
