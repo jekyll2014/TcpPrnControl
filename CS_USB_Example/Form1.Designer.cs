@@ -165,7 +165,6 @@ namespace TcpPrnControl
             this.checkBox_autoscroll.AutoSize = true;
             this.checkBox_autoscroll.Checked = true;
             this.checkBox_autoscroll.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_autoscroll.Enabled = false;
             this.checkBox_autoscroll.Location = new System.Drawing.Point(12, 193);
             this.checkBox_autoscroll.Name = "checkBox_autoscroll";
             this.checkBox_autoscroll.Size = new System.Drawing.Size(75, 17);
@@ -245,7 +244,7 @@ namespace TcpPrnControl
             this.textBox_saveTo.Name = "textBox_saveTo";
             this.textBox_saveTo.Size = new System.Drawing.Size(62, 20);
             this.textBox_saveTo.TabIndex = 14;
-            this.textBox_saveTo.Text = "usb_rx.txt";
+            this.textBox_saveTo.Text = "tcp_rx.txt";
             // 
             // button_openFile
             // 
