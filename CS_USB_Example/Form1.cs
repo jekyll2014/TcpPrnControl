@@ -27,15 +27,15 @@ namespace TcpPrnControl
             // calling thread to the thread ID of the creating thread.
             // If these threads are different, it returns true.
             //if (this.textBox_terminal1.InvokeRequired)
-            if (this.textBox_terminal.InvokeRequired)
+            if (textBox_terminal.InvokeRequired)
             {
                 SetTextCallback1 d = new SetTextCallback1(SetText);
-                this.BeginInvoke(d, new object[] { text });
+                Invoke(d, new object[] { text });
             }
             else
             {
                 int pos = textBox_terminal.SelectionStart;
-                this.textBox_terminal.Text += text;
+                textBox_terminal.Text += text;
                 if (checkBox_autoscroll.Checked)
                 {
                     textBox_terminal.SelectionStart = textBox_terminal.Text.Length;
