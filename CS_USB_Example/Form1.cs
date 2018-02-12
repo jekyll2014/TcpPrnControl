@@ -15,7 +15,7 @@ namespace TcpPrnControl
 
         int SendComing = 0;
         int txtOutState = 0;
-        int LogLinesLimit = 10;
+        int LogLinesLimit = 100;
         long oldTicks = DateTime.Now.Ticks, limitTick = 0;
         public const byte Port1DataIn = 11;
         public const byte Port1DataOut = 12;
