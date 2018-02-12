@@ -30,7 +30,7 @@ namespace TcpPrnControl
             if (textBox_terminal.InvokeRequired)
             {
                 SetTextCallback1 d = new SetTextCallback1(SetText);
-                Invoke(d, new object[] { text });
+                BeginInvoke(d, new object[] { text });
             }
             else
             {
