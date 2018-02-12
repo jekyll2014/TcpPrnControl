@@ -26,16 +26,18 @@ namespace TcpPrnControl
             // InvokeRequired required compares the thread ID of the
             // calling thread to the thread ID of the creating thread.
             // If these threads are different, it returns true.
-            //if (this.textBox_terminal1.InvokeRequired)
-            if (this.textBox_terminal.InvokeRequired)
+            if (textBox_terminal.InvokeRequired)
             {
                 SetTextCallback1 d = new SetTextCallback1(SetText);
-                this.BeginInvoke(d, new object[] { text });
+                BeginInvoke(d, new object[] { text });
             }
             else
             {
                 int pos = textBox_terminal.SelectionStart;
-                this.textBox_terminal.Text += text;
+                //textBox_terminal.Text += text;                
+                textBox_terminal.AppendText(text);
+                //if (logText.Length > 65536) logText.Remove(0, logText.Length-65536);
+                if (textBox_terminal.Lines.Length > 100) logText.Remove(0, logText.Length - 65536);
                 if (checkBox_autoscroll.Checked)
                 {
                     textBox_terminal.SelectionStart = textBox_terminal.Text.Length;
@@ -88,6 +90,7 @@ namespace TcpPrnControl
         {
             InitializeComponent();
             ToolTipTerminal.SetToolTip(textBox_terminal, "Press left mouse button to read data from printer");
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer, true);
         }
 
         private void button_OPEN_Click(object sender, EventArgs e)
