@@ -15,6 +15,7 @@ namespace TcpPrnControl
 
         int SendComing = 0;
         int txtOutState = 0;
+        int LogLinesLimit = 10;
         long oldTicks = DateTime.Now.Ticks, limitTick = 0;
         public const byte Port1DataIn = 11;
         public const byte Port1DataOut = 12;
@@ -36,6 +37,12 @@ namespace TcpPrnControl
             {
                 int pos = textBox_terminal.SelectionStart;
                 textBox_terminal.AppendText(text);
+                if (textBox_terminal.Lines.Length > LogLinesLimit)
+                {
+                    StringBuilder tmp = new StringBuilder();
+                    for (int i = textBox_terminal.Lines.Length - LogLinesLimit; i < textBox_terminal.Lines.Length; i++) tmp.Append(textBox_terminal.Lines[i]);
+                    textBox_terminal.Text = tmp.ToString();
+                }
                 if (checkBox_autoscroll.Checked)
                 {
                     textBox_terminal.SelectionStart = textBox_terminal.Text.Length;
