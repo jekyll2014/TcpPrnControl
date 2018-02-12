@@ -35,7 +35,7 @@ namespace TcpPrnControl
             else
             {
                 int pos = textBox_terminal.SelectionStart;
-                textBox_terminal.Text += text;
+                textBox_terminal.AppendText(text);
                 if (checkBox_autoscroll.Checked)
                 {
                     textBox_terminal.SelectionStart = textBox_terminal.Text.Length;
