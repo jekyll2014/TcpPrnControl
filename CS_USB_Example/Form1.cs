@@ -40,7 +40,11 @@ namespace TcpPrnControl
                 if (textBox_terminal.Lines.Length > LogLinesLimit)
                 {
                     StringBuilder tmp = new StringBuilder();
-                    for (int i = textBox_terminal.Lines.Length - LogLinesLimit; i < textBox_terminal.Lines.Length; i++) tmp.Append(textBox_terminal.Lines[i]);
+                    for (int i = textBox_terminal.Lines.Length - LogLinesLimit; i < textBox_terminal.Lines.Length; i++)
+                    {
+                        tmp.Append(textBox_terminal.Lines[i]);
+                        tmp.Append("\r\n");
+                    }
                     textBox_terminal.Text = tmp.ToString();
                 }
                 if (checkBox_autoscroll.Checked)
@@ -95,6 +99,20 @@ namespace TcpPrnControl
         {
             InitializeComponent();
             ToolTipTerminal.SetToolTip(textBox_terminal, "Press left mouse button to read data from printer");
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            checkBox_hexCommand.Checked = Properties.Settings.Default.checkBox_hexCommand;
+            textBox_command.Text = Properties.Settings.Default.textBox_command;
+            checkBox_hexParam.Checked = Properties.Settings.Default.checkBox_hexParam;
+            textBox_param.Text = Properties.Settings.Default.textBox_param;
+            textBox_ipAddress.Text = Properties.Settings.Default.DefaultAddress;
+            textBox_port.Text = Properties.Settings.Default.DefaultPort;
+            timer1.Interval = Properties.Settings.Default.TCPDataRefreshInterval;
+            limitTick = Properties.Settings.Default.LineBreakTimeout;
+            limitTick *= 10000;
+            LogLinesLimit = Properties.Settings.Default.LogLinesLimit;
         }
 
         private void button_OPEN_Click(object sender, EventArgs e)
@@ -516,19 +534,6 @@ namespace TcpPrnControl
             Properties.Settings.Default.checkBox_hexParam = checkBox_hexParam.Checked;
             Properties.Settings.Default.textBox_param = textBox_param.Text;
             Properties.Settings.Default.Save();
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            checkBox_hexCommand.Checked = Properties.Settings.Default.checkBox_hexCommand;
-            textBox_command.Text = Properties.Settings.Default.textBox_command;
-            checkBox_hexParam.Checked = Properties.Settings.Default.checkBox_hexParam;
-            textBox_param.Text = Properties.Settings.Default.textBox_param;
-            textBox_ipAddress.Text = Properties.Settings.Default.DefaultAddress;
-            textBox_port.Text = Properties.Settings.Default.DefaultPort;
-            timer1.Interval = Properties.Settings.Default.TCPDataRefreshInterval;
-            limitTick = Properties.Settings.Default.LineBreakTimeout;
-            limitTick *= 10000;
         }
 
         private void radioButton_stream_CheckedChanged(object sender, EventArgs e)
