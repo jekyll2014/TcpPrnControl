@@ -303,7 +303,7 @@ namespace TcpPrnControl
 
                                     if (checkBox_hexTerminal.Checked) outStr = Accessory.ConvertByteArrayToHex(tmpBuffer, tmpBuffer.Length);
                                     //else outStr = ConvertHexToString(ConvertByteArrToHex(tmpBuffer, tmpBuffer.Length));
-                                    else outStr = tmpBuffer.ToString();
+                                    else outStr = Encoding.GetEncoding(TcpPrnControl.Properties.Settings.Default.CodePage).GetString(tmpBuffer);
                                     collectBuffer(outStr, Port1DataOut);
                                     if (SendComing > 1) m = tmpBuffer.Length;
                                 }
@@ -336,7 +336,7 @@ namespace TcpPrnControl
                                 else outErr = "Write Failure";
                                 if (checkBox_hexTerminal.Checked) outStr = Accessory.ConvertByteArrayToHex(tmpBuffer, tmpBuffer.Length);
                                 //else outStr += ConvertHexToString(ConvertByteArrToHex(tmpBuffer, tmpBuffer.Length));
-                                else outStr = tmpBuffer.ToString();
+                                else outStr = Encoding.GetEncoding(TcpPrnControl.Properties.Settings.Default.CodePage).GetString(tmpBuffer);
                                 collectBuffer(outStr, Port1DataOut);
                                 collectBuffer(outErr, Port1Error);
                                 progressBar1.Value = (n * 100) / (repeat * tmpBuffer.Length);
