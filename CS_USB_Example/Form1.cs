@@ -171,8 +171,6 @@ namespace TcpPrnControl
 
         private void button_WRITE_Click(object sender, EventArgs e)
         {
-            if (textBox_command.Text + textBox_param.Text != "")
-            {
                 if (textBox_command.Text + textBox_param.Text != "")
                 {
                     string outStr;
@@ -191,7 +189,6 @@ namespace TcpPrnControl
                     }
                 }
                 timer1_Tick(this, EventArgs.Empty);
-            }
         }
 
         private void checkBox_hexCommand_CheckedChanged(object sender, EventArgs e)
