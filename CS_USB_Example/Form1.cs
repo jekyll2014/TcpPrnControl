@@ -171,8 +171,6 @@ namespace TcpPrnControl
 
         private void button_WRITE_Click(object sender, EventArgs e)
         {
-            if (textBox_command.Text + textBox_param.Text != "")
-            {
                 if (textBox_command.Text + textBox_param.Text != "")
                 {
                     string outStr;
@@ -191,7 +189,6 @@ namespace TcpPrnControl
                     }
                 }
                 timer1_Tick(this, EventArgs.Empty);
-            }
         }
 
         private void checkBox_hexCommand_CheckedChanged(object sender, EventArgs e)
@@ -283,7 +280,7 @@ namespace TcpPrnControl
                                     if (WriteTCP(outByte))
                                     {
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
-                                        await TaskEx.Delay(strDelay);
+                                        if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         byte[] inStream = ReadTCP();
                                         if (inStream.Length > 0)
                                         {
@@ -363,7 +360,7 @@ namespace TcpPrnControl
                                     {
                                         if (checkBox_hexTerminal.Checked) outStr = tmpBuffer[m];
                                         else outStr = Accessory.ConvertHexToString(tmpBuffer[m]);
-                                        await TaskEx.Delay(strDelay);
+                                        if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         byte[] inStream = ReadTCP();
                                         if (inStream.Length > 0)
                                         {
@@ -406,7 +403,7 @@ namespace TcpPrnControl
                                     {
                                         if (checkBox_hexTerminal.Checked) outStr = tmpBuffer.Substring(m, 3);
                                         else outStr = Accessory.ConvertHexToString(tmpBuffer.Substring(m, 3));
-                                        await TaskEx.Delay(strDelay);
+                                        if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         byte[] inStream = ReadTCP();
                                         if (inStream.Length > 0)
                                         {
