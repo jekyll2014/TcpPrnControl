@@ -283,7 +283,7 @@ namespace TcpPrnControl
                                     if (WriteTCP(outByte))
                                     {
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
-                                        await TaskEx.Delay(strDelay);
+                                        if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         byte[] inStream = ReadTCP();
                                         if (inStream.Length > 0)
                                         {
@@ -363,7 +363,7 @@ namespace TcpPrnControl
                                     {
                                         if (checkBox_hexTerminal.Checked) outStr = tmpBuffer[m];
                                         else outStr = Accessory.ConvertHexToString(tmpBuffer[m]);
-                                        await TaskEx.Delay(strDelay);
+                                        if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         byte[] inStream = ReadTCP();
                                         if (inStream.Length > 0)
                                         {
@@ -406,7 +406,7 @@ namespace TcpPrnControl
                                     {
                                         if (checkBox_hexTerminal.Checked) outStr = tmpBuffer.Substring(m, 3);
                                         else outStr = Accessory.ConvertHexToString(tmpBuffer.Substring(m, 3));
-                                        await TaskEx.Delay(strDelay);
+                                        if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         byte[] inStream = ReadTCP();
                                         if (inStream.Length > 0)
                                         {
